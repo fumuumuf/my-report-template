@@ -21,7 +21,7 @@
 
 project = 'report'
 copyright = '2019, fumuumuf'
-document_title = 'ふーむのドキュメント'
+document_title = 'ふーむのどきゅめんと'
 author = '河合 ふーむ'
 
 # The short X.Y version
@@ -161,12 +161,13 @@ latex_docclass = {'manual': 'jsbook'}
 latex_paper_size = 'a4'
 
 # 目次設定 表示したくないのでブランクでクリアしている
-latex_elements['tableofcontents'] = r''' 
-'''
+HIDE_TABLE_OF_CONTENTS = True
+if HIDE_TABLE_OF_CONTENTS:
+    latex_elements['tableofcontents'] = r''' 
+    '''
 
-# 空白ベージ産まないように
+# 表紙の後に空白ベージ産まないように
 latex_elements['extraclassoptions'] = 'openany'
-
 
 # preambleの設定
 latex_elements['preamble'] = r"""
@@ -175,21 +176,32 @@ latex_elements['preamble'] = r"""
 \usepackage{picture}
 \usepackage{graphicx}
 
+% --------------------------------------
 % -- chapter, sectionのレイアウト制御 --
+% --------------------------------------
+
 % chapter
 \titlespacing{\chapter}{0pt}{*-2}{*2} % chapterの余白を制御
+
+% chapter はドキュメントクラスに定義された @omit@number を参照したいので makeatletter - makeatother で囲っている
+% これは 参考文献にはこの chapter 設定を適用しないようにするため.
+\makeatletter
 \titleformat{\chapter}[block]
 {\huge} % 書式
 {\huge} % ラベル書式
 {0pt} % ラベルと見出しの間隔
-{
-  \hspace{-4pt}
-  % {\filleft \thechapter}  % chapter 番号
-  % \hspace{0pt}
-} % 見出し直前コード
-[
+{ % 見出し直前コード
+  \hspace{-12pt}
+  \hspace{0pt}
+  \if@omit@number
+  \else
+  {\filleft \thechapter.} % chapter 番号
+  \fi
+} 
+[ % 見出し直後コード
   \hrule 
-] % 見出し直後コード
+] 
+\makeatother
 
 % section
 \titleformat{\section}[block]
@@ -209,15 +221,16 @@ latex_elements['preamble'] = r"""
 {
   \hspace{-5pt}
   % \normalfont \Large\bfseries \thesubsection
-  % \normalfont \Large\bfseries % section番号は表示しない
   \bfseries(\roman{subsection}) 
 }
 [
 \vspace{-5pt}
 ]
 
+% ----------------------------
+% -- 表紙の簡素化 ------------
+% ----------------------------
 
-% -- 表紙の簡素化 --
 \makeatletter 
 \renewcommand{\maketitle}{%
   \let\spx@tempa\relax
@@ -244,11 +257,6 @@ latex_elements['preamble'] = r"""
         \end{tabular}
         \par}
       %\vfill\vfill
-%      {\large
-%       \@date \par
-%       \vfill
-%       \py@authoraddress \par
-%      }%
     \end{flushright}%
     \@thanks
   \end{titlepage}%
@@ -256,10 +264,13 @@ latex_elements['preamble'] = r"""
 \makeatletter 
 
 
+% --------------------------------
 % -- ページのスタイル制御 --
-\pagenumbering{arabic} % ページ番号をアラビア数字に
+% --------------------------------
 
 % ここではフッターにページ番号を表示するだけのシンプルな設定をする. 
+
+\pagenumbering{arabic} % ページ番号をアラビア数字に
 
 % plain ページスタイルの再定義
 \fancypagestyle{plain}{
@@ -277,8 +288,7 @@ latex_elements['preamble'] = r"""
 \renewcommand{\footrulewidth}{0.4pt}
 }
 
-% jsclasses/jsreport.cls
-% ではchapterの開始ページは plainhead (or plainfoot) になる
+% jsclasses/jsreport.cls ではchapterの開始ページは plainhead (or plainfoot) になる
 \fancypagestyle{plainhead}{
 \fancyhf{} % 一旦設定をクリア
 \fancyfoot[CE,CO]{\thepage}
@@ -296,17 +306,29 @@ latex_elements['preamble'] = r"""
 
 \pagestyle{plain} % ページスタイルを plain に変更 
 
+% --------------------------
+% ------- その他 -----------
+% --------------------------
+
 % 段落の字下げ
 \setlength\parindent{1zw} 
 
-
-% 1ページだけクリアして 参考文献出力
-% (デフォルトだと 2ページクリア)
+% 1ページクリアして 参考文献の出力 (デフォルトだと 中1ページ挿入)
 \renewenvironment{sphinxthebibliography}[1]
-{\clearpage% \phantomsection % not needed here since TeXLive 2010's hyperref
+{\clearpage 
  \begin{thebibliography}{1}}
 {\end{thebibliography}}
 
+% プリントアウトするときは有効に
+% \hypersetup{colorlinks=false} % ハイパーリンクの色を無効にする
+
+% 図番を chapter で区切らず通しに
+% \makeatletter
+% \renewcommand{\thefigure}{%
+% \arabic{figure}}
+% \renewcommand{\thetable}{%
+% \arabic{table}}
+% \makeatother
 
 """
 
